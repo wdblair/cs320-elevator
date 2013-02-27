@@ -1,0 +1,5 @@
+staload "simulator.sats"
+
+(* ****** ****** *)
+
+implement service_requests = "[{\"dir\":\"d\",\"time\":1.3359375,\"flr\":10,\"id\":0,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":5002.634,\"flr\":7,\"id\":1,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":10004.043,\"flr\":9,\"id\":2,\"tag\":\"service\"},{\"dir\":\"d\",\"time\":15004.825,\"flr\":9,\"id\":3,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":20006.156,\"flr\":4,\"id\":4,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":22006.514,\"flr\":8,\"id\":5,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":23007.418,\"flr\":1,\"id\":6,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":25007.89,\"flr\":1,\"id\":7,\"tag\":\"service\"},{\"dir\":\"d\",\"time\":28009.146,\"flr\":3,\"id\":8,\"tag\":\"service\"},{\"dir\":\"u\",\"time\":33010.363,\"flr\":9,\"id\":9,\"tag\":\"service\"}]"
