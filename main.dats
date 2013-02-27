@@ -3,4 +3,7 @@
 staload "simulator.sats"
 staload "elevator.sats"
 
-implement main () = ()
+dynload "simulator.dats"
+dynload "data.dats"
+
+implement main () = elevator_simulation()

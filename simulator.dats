@@ -114,8 +114,15 @@ in
         //
         val (control, sched, dir, floor, cmd) =
           elevator_controller(st.0, st.1, st.2, st.3, arrived)
+        val timenxt =
+          case+ cmd of
+            | Some(cmd) => 
+              (case+ cmd of
+                | MoveToFloor(target) => time + abs(floor - target)
+                | _ =>> time + 2.0)
+            | None() => time + 1.0
       in
-        loop(togo, record, time, (control, sched, dir, floor))
+        loop(togo, record, timenxt, (control, sched, dir, floor))
       end
       val _ = loop(passengers, output , 0.0, start)
       val _ = save_to_file(output, "output.json")
