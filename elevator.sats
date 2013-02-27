@@ -92,9 +92,8 @@ typedef events = List(event)
   
   Given a set of requests, a SCAN scheduler chooses a 
   direction and only services requests in increasing order
-  along its current direction. After no more requests 
-  along a direction exist, it switches direction and does
-  the same thing.
+  along its current direction. When no more requests remain,
+  it switches direction and repeats the process.
   
   Your controller's state is revealed through arguments
   passed to this function. The control_state, schedule,
@@ -105,7 +104,7 @@ typedef events = List(event)
   command allows you to move your elevator and open the door.
 *)
 fun elevator_controller (
-  _: control_state, _: schedule, _: direction, _: events
-): (control_state, schedule, direction, Option(command))
+  _: control_state, _: schedule, _: direction, _: floor,  _: events
+): (control_state, schedule, direction, floor,  Option(command))
 
 (* ****** ****** *)
