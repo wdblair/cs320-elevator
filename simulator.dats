@@ -6,8 +6,6 @@ staload "simulator.sats"
 staload "elevator.sats"
 
 local
-  macdef RAND_MAX = $extval(int, "RAND_MAX")
-
   extern
   fun rand(): int = "mac#" 
 
@@ -40,6 +38,11 @@ fun publish_event (
   val () = array_append(js, obj)
 }
 
+typedef state = (control_state, schedule, direction)
+
+#define :: list_cons
+#define nil list_nil
+
 implement elevator_simulation () = let
   val opt = json_from_string(service_requests)
 in
@@ -48,10 +51,22 @@ in
       val _ = println! "Cannot read requests."
     }
     | ~Some_vt(need_service) => {
-      fun loop (js: !json, time: double): void = let
+      val output = json_array()
+      val start = (Ready(), nil, Up())
+      fun loop ( arrivals: !json, record: !json, 
+        time: double, st: state 
+      ): void = let
+        //Create new events.
+        val events = nil
+        //Get the new state
+        val (control, sched, dir, cmd) =
+          elevator_controller(st.0, st.1, st.2, events)
       in
-        loop(js, time)
+        loop(arrivals, record, time, (control, sched, dir))
       end
+      val _ = loop(need_service, output , 0.0, start)
+      val _ = save_to_file(output, "output.json")
+      val _ = json_free(output)
       val _ = json_free(need_service)
     }
 end
