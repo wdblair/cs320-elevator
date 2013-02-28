@@ -106,15 +106,3 @@ typedef events = List(event)
 fun elevator_controller (
   _: control_state, _: schedule, _: direction, _: floor,  _: events
 ): (control_state, schedule, direction, floor,  Option(command))
-
-(* ****** ****** *)
-
-(* 
-  These functions are used internally and are not apart of the
-  assignment.
-*)
-fun board(_: floor): List(request)
-
-fun leave(_: floor): void
-
-(* ****** ****** *)

@@ -10,13 +10,21 @@ fun seed (): void
 
 fun random_number (min:int, max: int): int
 
-fun elevator_simulation (): void 
+fun elevator_simulation (): void
 
 val service_requests : string
 
 fun publish_event (
   tag: string, id: int, flr: int,
-  direction: direction, time: double
+  direction: Option(direction)
 ): void
+
+(* ****** ***** *)
+
+(*
+  Increments the internal time in the
+  simulator by t seconds.
+*)
+fun wait (t: int): void
 
 (* ****** ****** *)
