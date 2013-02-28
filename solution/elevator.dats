@@ -17,10 +17,10 @@ implement elevator_controller
       | list_cons (x, xs) => let
         val () = case+ x of
           | Request (req) =>
-            ((case+ req of
+            (case+ req of
               | NeedElevator(dest, dir) =>
                 println!(dest)
-              | _ =>> ()))
+              | _ =>> ())
           | _ =>> ()
        in loop(xs) end
   val _ = loop(events)

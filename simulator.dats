@@ -1,5 +1,7 @@
+import Global = "contrib/global"
 import JS = "contrib/json"
 
+staload Global("global.sats")
 staload JS("json.sats")
 
 staload "simulator.sats"
@@ -19,12 +21,22 @@ in
     val dist = max - min
     val step = cr mod (dist+1)
   in min + step end
+  
 end
 
-fun publish_event (
-  js: !json, tag: string, id: int, flr: int, 
-  direction: direction, time: double
-): void = {
+local
+  var output : json with pfout
+  
+  val () = output := json_array()
+  
+  viewdef vout = json @ output 
+  
+  prval lock = viewlock_new{vout}(pfout)
+in
+  val output_lock = @{lock= lock, p= &output}
+end
+
+implement publish_event(tag, id, flr, direction, time) = {
   val obj = json_object()
   val () = object_set(obj, "tag", encode(tag))
   val () = object_set(obj, "id", encode(id))
@@ -35,7 +47,9 @@ fun publish_event (
       | Up() => "u"
       | Down() => "d"
   val () = object_set(obj, "dir", encode(dir))
-  val () = array_append(js, obj)
+  val (pf | output) = global_get(output_lock)
+  val () = array_append(!output, obj)
+  prval () = global_return(output_lock, pf)
 }
 
 typedef state = (control_state, schedule, direction, floor)
@@ -116,7 +130,7 @@ in
           elevator_controller(st.0, st.1, st.2, st.3, arrived)
         val timenxt =
           case+ cmd of
-            | Some(cmd) => 
+            | Some(cmd) =>
               (case+ cmd of
                 | MoveToFloor(target) => time + abs(floor - target)
                 | _ =>> time + 2.0)
