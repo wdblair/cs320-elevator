@@ -10,7 +10,7 @@ staload "elevator.sats"
 local
   extern
   fun rand(): int = "mac#" 
-
+  
   extern
   fun srand(seed: uint): void = "mac#"
 in
@@ -25,9 +25,7 @@ in
 end
 
 local
-  var output : json with pfout
-  
-  val () = output := json_array()
+  var output : json with pfout = json_array()
   
   viewdef vout = json @ output 
   

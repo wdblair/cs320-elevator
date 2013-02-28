@@ -108,3 +108,13 @@ fun elevator_controller (
 ): (control_state, schedule, direction, floor,  Option(command))
 
 (* ****** ****** *)
+
+(* 
+  These functions are used internally and are not apart of the
+  assignment.
+*)
+fun board(_: floor): List(request)
+
+fun leave(_: floor): void
+
+(* ****** ****** *)
