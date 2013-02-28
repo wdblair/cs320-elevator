@@ -21,10 +21,9 @@ stadef set = $Set.set
 implement $Map.compare_key_key<int>(k1,k2,cmp) = 
   if k1 < k2 then ~1 else if k1 > k2 then 1 else 0
   
-fn cmp (x1: int, x2: int):<cloref> Sgn = compare(x1,x2)
+fn cmp (x1: int, x2: int):<cloref> Sgn = compare(x1, x2)
 
-
-macdef map_insert_opt(m, key, itm) = 
+macdef map_insert_opt(m, key, itm) =
   $Map.linmap_insert_opt(,(m), ,(key), ,(itm), cmp)
 
 local
@@ -44,7 +43,14 @@ in
   val onboard_lock = @{lock= locko, p= &onboard}
 end
 
-
+implement board(floor) = let
+  val (pf | waiting) = global_get(waiting_lock)
+  val opt = $Map.linmap_search_opt(!waiting, floor, cmp)
+  prval () = global_return(waiting_lock, pf)
+in
+  case+ opt of
+    | ~None_vt () => list_nil ()
+    | ~Some_vt (set) => list_nil ()
+end
 
 (* ****** ****** *)
-
