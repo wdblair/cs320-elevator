@@ -62,6 +62,7 @@ end
 implement arrive (p) = let
   val (pf | waiting) = global_get(waiting_lock)
   val floor = get_floor(p)
+  val _ = publish_event("service", get_id(p), floor, Some(get_direction(p)))
   val opt = 
     $Map.linmap_search_opt<floor, set(passenger)>(!waiting, floor, cmp)
 in
@@ -89,7 +90,7 @@ end
 
 (* ****** ****** *)
 
-implement board(floor) = let
+implement board(floor, direction) = let
   val (pf | waiting) = global_get(waiting_lock)
   val opt = $Map.linmap_search_opt(!waiting, floor, cmp)
 in
@@ -103,14 +104,16 @@ in
         $Set.linset_listize_free<passenger>(!p)
       )
       val () = !p := $Set.linset_make_nil{passenger}()
-      fun enter_elevator(p: passenger):<cloref1> request = let
-        val dir = get_direction(p)
-        val min = 
-          case+ dir of
+      fun enter_elevator(p: passenger):<cloref1> Option(request) = let
+        val usersdir = get_direction(p)
+      in
+        if usersdir = direction then let
+        val min =
+          case+ usersdir of
             | Up () => floor + 1
             | Down() => 1
         val max =
-          case+ dir of
+          case+ usersdir of
             | Up () => 10
             | Down() => floor - 1
        val nxt = random_number(min, max)
@@ -118,22 +121,55 @@ in
        val (boardpf | onboard) = global_get(onboard_lock)
        val _ = $Set.linset_insert(!onboard, p, cmp_p)
        prval () = global_return(onboard_lock, boardpf)
-       //Take a second
        val () = wait(1)
        val () = publish_event("request", get_id(p), nxt, None)
-      in GoToFloor(nxt) end
-      val requests = list_of_list_vt(
+      in Some(GoToFloor(nxt)) end
+      else
+        None()
+      end
+      prval () = minus_addback(minus, setpf | !waiting)
+      
+      val opt_requests = list_of_list_vt(
         list_map_cloref(entering,
           enter_elevator
         )
       )
-      prval () = minus_addback(minus, setpf | !waiting)
+      fun collect (
+        res: List_vt(request), r: Option(request)
+      ): List_vt(request) =
+        case+ r of
+          | Some(r) => list_vt_cons(r, res)
+          | None () => res
+      val requests = list_of_list_vt (
+        list_fold_left_fun<List_vt(request)>(collect, list_vt_nil, opt_requests)
+      )
     in
-      requests where {
+      list_nil where {
         prval () = global_return(waiting_lock, pf)
       }
     end
 end
 
+(* ****** ****** *)
+
+implement leave(floor) = {
+  val (pf | onboard) = global_get(onboard_lock)
+  val passengers = list_of_list_vt(
+    $Set.linset_listize(!onboard)
+  )
+  val _ = list_foreach_cloref(passengers, lam (p) =<cloref1>
+    if get_floor(p) = floor then {
+      val (pf | onboard) = global_get(onboard_lock)
+      //Remove from elevator
+      val _ = $Set.linset_remove<passenger>(!onboard, p, cmp_p)
+      //Give them a second to leave.
+      val _ = wait(1)
+      //Publish the event
+      val _ = publish_event("exit", get_id(p), floor, None)
+      prval () = global_return(onboard_lock, pf)
+    }
+  )
+  prval () = global_return(onboard_lock, pf)
+}
 
 (* ****** ****** *)

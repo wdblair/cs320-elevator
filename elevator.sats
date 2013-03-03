@@ -15,6 +15,10 @@ datatype direction =
   | Up of ()
   | Down of ()
 
+fun eq_direction_direction(_: direction, _: direction):<> bool
+
+overload = with eq_direction_direction
+
 (*
   At any point the elevator will be in 
   one of these three states.

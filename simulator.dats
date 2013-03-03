@@ -20,16 +20,19 @@ in
     val cr = rand()
     val dist = max - min
     val step = cr mod (dist+1)
-  in min + step end
-  
+  in min + step end  
 end
 
 local
   var output : json with pfout = json_array()
+  var time : int with pftime = 0
   
-  viewdef vout = json @ output 
+  viewdef out = json @ output 
+  viewdef time = int @ time
   
-  prval lock = viewlock_new{vout}(pfout)
+  
+  prval outlock = viewlock_new{vut}(pfout)
+  prval timelock = viewlock_new{time}(pftime)
 in
   val output_lock = @{lock= lock, p= &output}
 end
