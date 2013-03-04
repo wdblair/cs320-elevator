@@ -16,7 +16,8 @@ staload Set = "libats/SATS/linset_avltree.sats"
 staload _ = "libats/DATS/linset_avltree.dats"
 stadef set = $Set.set
 
-staload _ = "prelude/SATS/list_vt.sats"
+staload _ = "prelude/DATS/list.dats"
+staload _ = "prelude/DATS/list_vt.dats"
 
 (* ****** ****** *)
 
@@ -74,10 +75,10 @@ in
      in
       case+ ok of
         | ~None_vt() => () where {
-          val _ = global_return(waiting_lock, pf)
+          prval _ = global_return(waiting_lock, pf)
         }
         | ~Some_vt(old) => $Set.linset_free(old) where {
-          val _ = global_return(waiting_lock, pf)
+          prval _ = global_return(waiting_lock, pf)
         }
      end
     | ~Some_vt(ref) => {
@@ -163,9 +164,9 @@ implement leave(floor) = {
       //Remove from elevator
       val _ = $Set.linset_remove<passenger>(!onboard, p, cmp_p)
       //Give them a second to leave.
+      val _ = publish_event("exit", get_id(p), floor, None)
       val _ = wait(1)
       //Publish the event
-      val _ = publish_event("exit", get_id(p), floor, None)
       prval () = global_return(onboard_lock, pf)
     }
   )

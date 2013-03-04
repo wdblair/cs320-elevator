@@ -1,20 +1,21 @@
+%{#
+#include "elevator_passenger.cats"
+%}
+
 staload "simulator.sats"
 staload "elevator.sats"
 
 typedef id = int
 
 abst@ype passenger = @{
-  id= id,
-  start= floor,
-  destination= floor,
-  direction= direction,
-  arrived= double,
-  exited= double
+  id= int
 }
 
 fun make_passenger (
-  id: int, start: double, direction: direction
+  start: int, direction: direction, floor: floor
 ):<> passenger
+
+fun new_id (): int  //get the next id  
 
 fun get_id (
   p: passenger

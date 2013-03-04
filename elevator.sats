@@ -1,5 +1,7 @@
 (* ****** ****** *)
 
+#define ATS_STALOADFLAG 0
+
 (* 
   floor - A number between 1 and 10
 *)
@@ -108,5 +110,5 @@ typedef events = List(event)
   command allows you to move your elevator and open the door.
 *)
 fun elevator_controller (
-  _: control_state, _: schedule, _: direction, _: floor,  _: events
+  _: control_state, _: schedule, _: direction, _: floor,  _: Option(event)
 ): (control_state, schedule, direction, floor,  Option(command))
