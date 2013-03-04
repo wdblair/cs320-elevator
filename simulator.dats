@@ -25,7 +25,7 @@ in
     val cr = rand()
     val dist = max - min
     val step = cr mod (dist+1)
-  in min + step end  
+  in min + step end
 end
 
 local
@@ -108,7 +108,7 @@ implement elevator_simulation () = let
             case+ direction of  
               | "d" => Down()
               | "u" => Up()
-              | _ =>> Up()
+              | _ => Up()
           val _ = json_free(obj)
         in
           loop(arr, i + 1, @(time, Request(NeedElevator(floor, direction))):: res)
@@ -192,6 +192,8 @@ in
                         end
           end
       end
+      var floor : int = 1
+      val _ = loop(passengers, start, floor)
       val _ = save_to_file(output, "output.json")
       val _ = json_free(output)
     }

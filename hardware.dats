@@ -21,6 +21,17 @@ staload _ = "prelude/DATS/list_vt.dats"
 
 (* ****** ****** *)
 
+implement eq_direction_direction(d1,d2) = let
+  val left = 
+    case+ d1 of 
+      | Up () => 0
+      | Down() => 1
+  val right =
+    case+ d2 of
+      | Up () => 0
+      | Down() => 1
+in eq_int_int(left, right) end //overloading couldn't be resolved in this case....
+
 //internal state for the elevator
 
 implement $Map.compare_key_key<id>(k1, k2, cmp) =
@@ -109,21 +120,10 @@ in
         val usersdir = get_direction(p)
       in
         if usersdir = direction then let
-        val min =
-          case+ usersdir of
-            | Up () => floor + 1
-            | Down() => 1
-        val max =
-          case+ usersdir of
-            | Up () => 10
-            | Down() => floor - 1
-       val nxt = random_number(min, max)
-       val () = set_destination(p, nxt)
        val (boardpf | onboard) = global_get(onboard_lock)
        val _ = $Set.linset_insert(!onboard, p, cmp_p)
        prval () = global_return(onboard_lock, boardpf)
-//       val () = wait(1)
-//       val () = publish_event("request", get_id(p), nxt, None)
+       val nxt = get_destination(p)
       in Some(GoToFloor(nxt)) end
       else
         None()

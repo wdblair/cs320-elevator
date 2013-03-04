@@ -7,6 +7,7 @@ staload "elevator.sats"
 
 dynload "simulator.dats"
 dynload "hardware.dats"
+dynload "passenger.dats"
 dynload "data.dats"
 
 (* ****** ***** *)

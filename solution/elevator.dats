@@ -12,7 +12,7 @@ implement elevator_controller
   (control_state, schedule, dir, flr, event) = let
    val () =  case+ event of
               | None () => println! "No Event!"
-              | Some (event) => 
+              | Some (event) =>
                 case+ event of 
                   | Arrived (flr) => println! "Arrived at floor"
                   | DoorsClosed () => println! "Doors closed!"

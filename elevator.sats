@@ -1,7 +1,5 @@
 (* ****** ****** *)
 
-#define ATS_STALOADFLAG 0
-
 (* 
   floor - A number between 1 and 10
 *)
