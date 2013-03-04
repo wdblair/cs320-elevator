@@ -27,4 +27,6 @@ fun publish_event (
 *)
 fun wait (t: int): void
 
+fun time() : int
+
 (* ****** ****** *)

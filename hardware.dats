@@ -121,8 +121,8 @@ in
        val (boardpf | onboard) = global_get(onboard_lock)
        val _ = $Set.linset_insert(!onboard, p, cmp_p)
        prval () = global_return(onboard_lock, boardpf)
-       val () = wait(1)
-       val () = publish_event("request", get_id(p), nxt, None)
+//       val () = wait(1)
+//       val () = publish_event("request", get_id(p), nxt, None)
       in Some(GoToFloor(nxt)) end
       else
         None()

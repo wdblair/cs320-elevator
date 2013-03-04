@@ -72,7 +72,7 @@ datatype request =
   a MoveToFloor command. 
   
   Requests don't necessarily come in response to commands.
-  Throughout the simulation passengers will arrive at 
+  Throughout the simulation passengers will arrive at
   random floors in need of elevators. After you open the 
   doors at a specific floor, passengers will enter and 
   enter a request for where they want to go.
@@ -81,7 +81,7 @@ datatype request =
   of these events, otherwise you could deadlock or ignore 
   passengers.
 *)
-datatype event = 
+datatype event =
   | Arrived of (floor)
   | DoorsClosed of ()
   | Request of (request)
