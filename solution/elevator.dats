@@ -43,9 +43,8 @@ implement elevator_controller
         end
         //Decide where to go next
         | DoorsClosed () => look_for_request(state)
-        //Put requests in the queue
+        //Put requests in a list
         | Request(r) => let
-          val () = println! "got request!"
           val control_state = get_control_state(state)
           val schedule' = list_cons(r, get_schedule(state))
           val direction = state_direction(state)

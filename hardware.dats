@@ -30,7 +30,9 @@ implement eq_direction_direction(d1,d2) = let
     case+ d2 of
       | Up () => 0
       | Down() => 1
-in eq_int_int(left, right) end //overloading couldn't be resolved in this case....
+//overloading couldn't be resolved in this case....
+in eq_int_int(left, right) end 
+
 
 //internal state for the elevator
 
@@ -47,9 +49,6 @@ end
 fn cmp (x1: id, x2: id):<cloref> Sgn = compare(x1, x2)
 
 fn cmp_p (p1: passenger, p2: passenger):<cloref> Sgn = compare(p1, p2)
-
-macdef map_insert_opt(m, key, itm) =
-  $Map.linmap_insert_opt(,(m), ,(key), ,(itm), cmp)
 
 local
   var waiting : map (floor, set(passenger)) with pfw =
@@ -125,11 +124,11 @@ in
         case+ lst of
           | nil () => ()
           | x :: xs => 
-            if get_direction(x) =  direction then let 
+            if get_direction(x) = direction then let 
               val _ = $Set.linset_remove(!p, x, cmp_p)
             in remove_leaving(pf | xs, p) end
       val _ = remove_leaving(setpf | entering, p)
-      //This is redundant, I'll refactor it when I have a chance.
+      //This is a little redundant.
       fun enter_elevator (p: passenger):<cloref1> Option(request) = let
         val usersdir = get_direction(p)
       in
@@ -157,7 +156,9 @@ in
           | Some(r) => list_vt_cons(r, res)
           | None () => res
       val requests = list_of_list_vt (
-        list_fold_left_fun<List_vt(request)>(collect, list_vt_nil, opt_requests)
+        list_fold_left_fun<List_vt(request)>(
+          collect, list_vt_nil, opt_requests
+        )
       )
     in
       requests where {
