@@ -47,6 +47,11 @@ implement publish_event(tag, id, flr, direction) = {
   //
   val obj = json_object()
   val () = object_set(obj, "tag", encode(tag))
+  val () = 
+    case+ tag of
+      | "move" =>   
+        object_set(obj, "from", encode(flr))
+      | _ =>> ()
   val () = object_set(obj, "id", encode(id))
   val () = object_set(obj, "flr", encode(flr))
   val () = object_set(obj, "time", encode(!time))
@@ -69,7 +74,7 @@ implement publish_event(tag, id, flr, direction) = {
 
 implement wait(t) = {
   val (pf | time) = global_get(time_lock)
-  val () = !time := !time + t
+  val () = !time := !time + (t)
   prval () = global_return(time_lock, pf)
 }
 
@@ -78,8 +83,6 @@ implement time () = t where {
   val t = !time
   prval () = global_return(time_lock, pf)
 }
-
-typedef state = (control_state, schedule, direction, floor)
 
 #define :: list_cons
 #define nil list_nil
@@ -111,7 +114,7 @@ implement elevator_simulation () = let
               | _ => Up()
           val _ = json_free(obj)
         in
-          loop(arr, i + 1, @(time, Request(NeedElevator(floor, direction))):: res)
+          loop(arr, i + 1, @(time, Request(NeedElevator(floor, direction))) :: res)
         end
   in
     loop(arr, 0, nil)
@@ -123,10 +126,9 @@ in
     }
     | ~Some_vt(need_service) => {
       val passengers = json_array_to_events(need_service)
-      val output = json_array()
-      val start = (Ready(), nil, Up(), 1)
+      val start = make_state(Ready(), nil, Up(), 1)
       
-      fun loop(schedule: List(time_event), st: state, elevator_floor: &int): void = let
+      fun loop(schedule: List(time_event), controller: state, elevator_floor: &int): void = let
         fn cmp (t1:time_event, t2: time_event, p: !ptr):<> int = compare(t1.0, t2.0)
         //go to the next event
         val sorted_schedule = list_of_list_vt {time_event} (
@@ -138,7 +140,7 @@ in
           | x :: xs => let
             val () =
               if x.0 > time() then
-                wait(x.0 - time())
+                wait((x.0 - time()))
             val () =
               case+ x.1 of
                 //Record new arrivals.
@@ -149,53 +151,60 @@ in
                     in
                       arrive(p)
                     end
-                    | _ =>> ()
+                    | GoToFloor(id, floor) => publish_event("request", id, floor, None)
                  )
-                | Arrived(flr) => elevator_floor := flr
-                | _ =>> ()
-            val (control, schedule, direction, floor, opt) =
-              elevator_controller(st.0, st.1, st.2, st.3, Some(x.1))
+                | Arrived(flr) => {
+                  val () = elevator_floor := flr
+                  val () = publish_event("arrive", ~1, flr, None)
+                }
+                | DoorsClosed() => {
+                  val () = publish_event("close", ~1, ~1, None)
+                }
+            val (controller, opt) =
+              elevator_controller(controller, Some(x.1))
           in
             case+ opt of
-              | None () => loop(xs, @(control, schedule, direction, floor), elevator_floor)
+              | None () => loop(xs, controller, elevator_floor)
               | Some (cmd) =>
                   case+ cmd of
                     | MoveToFloor(floor) => let
                       val event = Arrived(floor)
-                      val time = time() + abs(elevator_floor - floor)
+                      val time = time() + (abs(elevator_floor - floor)*1000)
+                      val () = publish_event("move", ~1, floor, None)
                      in
-                        loop(list_cons(@(time,event), xs), @(control, schedule, direction, floor), elevator_floor)
+                        loop(list_cons(@(time,event), xs), controller, elevator_floor)
                      end
                     | OpenDoor() =>
-                      case+ control of
+                      case+ get_control_state(controller) of
                         | Moving() => exit(1) where {
                           val _ = prerrln! "You cannot open the door while moving."
                         }
                         |  _ =>> let
-                          val () = publish_event("open", ~1, ~1, Some(direction))
+                          val () = publish_event("open", ~1, ~1, Some(state_direction(controller)))
                           val () = leave(elevator_floor)
-                          val boarding = board(elevator_floor, direction)
+                          val boarding = board(elevator_floor, state_direction(controller))
                           fun timestamp(schedule: List(request),  i: int, res: List(time_event)): List(time_event) =
                             case+ schedule of
                               | list_nil() => let
-                                 val closed = list_cons(@(time()*i, DoorsClosed()), res)
+                                 val closed = list_cons(@(time()+i*1000, DoorsClosed()), res)
                                in
                                   list_of_list_vt ( 
                                     list_reverse<time_event>(closed)
                                   )
                                end
                               | list_cons(e, es) =>
-                                timestamp(es, i+1, list_cons(@(time()+i, Request(e)), res))
+                                timestamp(es, i+1, list_cons(@(time()+i*1000, Request(e)), res))
                           val requests = timestamp(boarding, 0, list_nil)
                         in
-                          loop(list_append(requests,xs), @(control, schedule, direction, floor), elevator_floor)
+                          loop(list_append(requests,xs), controller, elevator_floor)
                         end
           end
       end
       var floor : int = 1
       val _ = loop(passengers, start, floor)
-      val _ = save_to_file(output, "output.json")
-      val _ = json_free(output)
+      val (pf | output) = global_get(output_lock)
+      val _ = save_to_file(!output, "output.json")
+      prval () = global_return(output_lock, pf)
     }
 end
 

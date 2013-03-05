@@ -9,6 +9,7 @@ dynload "simulator.dats"
 dynload "hardware.dats"
 dynload "passenger.dats"
 dynload "data.dats"
+dynload "elevator.dats"
 
 (* ****** ***** *)
 

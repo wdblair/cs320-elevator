@@ -124,7 +124,8 @@ in
        val _ = $Set.linset_insert(!onboard, p, cmp_p)
        prval () = global_return(onboard_lock, boardpf)
        val nxt = get_destination(p)
-      in Some(GoToFloor(nxt)) end
+       val id = get_id(p)
+      in Some(GoToFloor(id, nxt)) end
       else
         None()
       end
@@ -145,7 +146,7 @@ in
         list_fold_left_fun<List_vt(request)>(collect, list_vt_nil, opt_requests)
       )
     in
-      list_nil where {
+      requests where {
         prval () = global_return(waiting_lock, pf)
       }
     end

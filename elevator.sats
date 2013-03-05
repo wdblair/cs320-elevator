@@ -60,7 +60,7 @@ datatype command =
 *)
 datatype request =
   | NeedElevator of (floor, direction)
-  | GoToFloor of (floor)
+  | GoToFloor of (int, floor)
   
 (*
   An elevator controller receives input from the 
@@ -89,6 +89,22 @@ datatype event =
 typedef schedule = List(request)
 typedef events = List(event)
 
+(*
+  All an elevator's state is stored in this type and
+  may be accessed using the following get methods.
+*)
+abst@ype state = ptr
+
+fun make_state(_: control_state, _: schedule, _: direction, _: floor): state
+
+fun get_control_state(_:state): control_state
+
+fun get_schedule(_:state): schedule
+
+fun state_direction(_:state): direction
+
+fun get_floor(_:state): floor
+
 (* 
   The goal of the elevator controller is to implement
   a simple SCAN scheduler to move passengers to their
@@ -100,13 +116,13 @@ typedef events = List(event)
   it switches direction and repeats the process.
   
   Your controller's state is revealed through arguments
-  passed to this function. The control_state, schedule,
-  and direction variables you return will always persist 
-  to be the arguments of the next call to elevator_controller. 
-  The events parameter is the simulator's way to inform you of
-  what's going on outside your controller, and the optional
-  command allows you to move your elevator and open the door.
+  passed to this function. The state variable you return 
+  will always persist to be the argument of the next call 
+  to elevator_controller. The events parameter is the simulator's 
+  way to inform you of what's going on outside your controller, and 
+  the optional command allows you to move your elevator and 
+  open the door.
 *)
 fun elevator_controller (
-  _: control_state, _: schedule, _: direction, _: floor,  _: Option(event)
-): (control_state, schedule, direction, floor,  Option(command))
+  _: state,  _: Option(event)
+): (state, Option(command))
