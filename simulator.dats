@@ -130,7 +130,9 @@ in
       val passengers = json_array_to_events(need_service)
       val start = make_state(Ready(), nil, Up(), 1)
       
-      fun loop(schedule: List(time_event), controller: state, elevator_floor: &int): void = let
+      fun loop (
+        schedule: List(time_event), controller: state, elevator_floor: &int
+      ): void = let
         fn cmp (t1:time_event, t2: time_event, p: !ptr):<> int = compare(t1.0, t2.0)
         //go to the next event
         val sorted_schedule = list_of_list_vt {time_event} (
@@ -139,17 +141,28 @@ in
       in
         case+ sorted_schedule of
           | nil () => let
-            //Print the remaining schedule, if any
-            fun print_schedule (lst: List(request)): void =
-              case+ lst of  
-                | nil () => ()
-                | x :: xs => let
-                  val () = 
-                    case+ x of 
-                      | NeedElevator(flr, direction) => println! flr
-                      | GoToFloor(id, flr) => println! flr
-                in print_schedule(xs) end
-           in print_schedule(get_schedule(controller)) end
+              val elevator_schedule = get_schedule(controller)
+          in
+            case+ elevator_schedule of 
+              | nil () => ()
+              | x :: xs => let
+                val () = 
+                  println! "The simulation has run out of events, but the following are in your schedule:"
+                //Print the remaining schedule, if any
+                fun print_schedule(lst: List(request)): void =
+                  case+ lst of  
+                    | nil () => ()
+                    | x :: xs => let
+                      val () =
+                        case+ x of 
+                          | NeedElevator(flr, direction) =>
+                            println!("Elevator needed at floor:", flr)
+                          | GoToFloor(id, flr) =>
+                            println!("Request to go to floor:", flr)
+                        
+                  in print_schedule(xs) end
+               in print_schedule(elevator_schedule) end
+          end
           | x :: xs => let
             val () =
               if x.0 > time() then
@@ -173,47 +186,46 @@ in
                 | DoorsClosed() => {
                   val () = publish_event("close", ~1, ~1, None)
                 }
-            val (controller, opt) =
-              elevator_controller(controller, Some(x.1))
+            val (controller, cmd) =
+              elevator_controller(controller, x.1)
           in
-            case+ opt of
-              | None () => loop(xs, controller, elevator_floor)
-              | Some (cmd) =>
-                  case+ cmd of
-                    | MoveToFloor(floor) => let
+            case+ cmd of
+              | Nothing () => loop(xs, controller, elevator_floor)
+              | MoveToFloor(floor) => let
                       val event = Arrived(floor)
                       val time = time() + (abs(elevator_floor - floor)*1000)
                       val () = publish_event("move", ~1, floor, None)
                      in
                         loop(list_cons(@(time,event), xs), controller, elevator_floor)
                      end
-                    | OpenDoor() =>
-                      case+ get_control_state(controller) of
-                        | Moving() => exit(1) where {
-                          val _ = prerrln! "You cannot open the door while moving."
-                        }
-                        |  _ =>> let
-                          val () =
-                            publish_event("open", ~1, ~1, Some(state_direction(controller)))
-                          val () = leave(elevator_floor)
-                          val boarding = board(elevator_floor, state_direction(controller))
-                          fun timestamp(
-                            schedule: List(request),  i: int, res: List(time_event)
-                          ): List(time_event) =
-                            case+ schedule of
-                              | list_nil() => let
-                                 val closed = list_cons(@(time()+i*1000, DoorsClosed()), res)
-                               in
-                                  list_of_list_vt ( 
-                                    list_reverse<time_event>(closed)
-                                  )
-                               end
-                              | list_cons(e, es) =>
-                                timestamp(es, i+1, list_cons(@(time()+i*1000, Request(e)), res))
-                          val requests = timestamp(boarding, 0, list_nil)
+              | OpenDoor() =>
+                case+ get_control_state(controller) of
+                  | Moving() => exit(1) where {
+                    val _ = prerrln! "You cannot open the door while moving."
+                  }
+                  |  _ =>> let
+                    val () =
+                      publish_event("open", ~1, ~1, Some(state_direction(controller)))
+                    val () = leave(elevator_floor)
+                    val boarding = board(elevator_floor, state_direction(controller))
+                    fun timestamp(
+                      schedule: List(request),  i: int, res: List(time_event)
+                    ): List(time_event) =
+                      case+ schedule of
+                        | nil() => let
+                          val closed = list_cons(@(time()+i*1000, DoorsClosed()), res)
                         in
-                          loop(list_append(requests,xs), controller, elevator_floor)
+                          list_of_list_vt ( 
+                            list_reverse<time_event>(closed)
+                          )
                         end
+                        | e :: es =>
+                          timestamp(es, i+1, @(time()+i*1000, Request(e)) :: res)
+                    //
+                    val requests = timestamp(boarding, 0, list_nil)
+                  in
+                    loop(requests + xs, controller, elevator_floor)
+                  end
           end
       end
       var floor : int = 1

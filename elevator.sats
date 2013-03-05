@@ -46,6 +46,7 @@ datatype control_state =
 datatype command = 
   | MoveToFloor of (int)
   | OpenDoor of ()
+  | Nothing of ()
 
 (*
   An elevator needs to service two different customers,
@@ -124,5 +125,5 @@ fun get_floor(_:state): floor
   open the door.
 *)
 fun elevator_controller (
-  _: state,  _: Option(event)
-): (state, Option(command))
+  _: state,  _: event
+): (state, command)
