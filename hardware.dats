@@ -30,9 +30,8 @@ implement eq_direction_direction(d1,d2) = let
     case+ d2 of
       | Up () => 0
       | Down() => 1
-//overloading couldn't be resolved in this case....
-in eq_int_int(left, right) end 
-
+//the symbol "=" couldn't be resolved in this case....
+in eq_int_int(left, right) end
 
 //internal state for the elevator
 
@@ -123,10 +122,15 @@ in
       ):<cloref1> void = 
         case+ lst of
           | nil () => ()
-          | x :: xs => 
-            if get_direction(x) = direction then let 
-              val _ = $Set.linset_remove(!p, x, cmp_p)
-            in remove_leaving(pf | xs, p) end
+          | x :: xs => let
+            val () = 
+              if get_direction(x) = direction then {
+                val b = $Set.linset_remove(!p, x, cmp_p)
+              }
+           in 
+            remove_leaving(pf | xs, p)
+           end
+      //
       val _ = remove_leaving(setpf | entering, p)
       //This is a little redundant.
       fun enter_elevator (p: passenger):<cloref1> Option(request) = let
@@ -175,7 +179,7 @@ implement leave(floor) = {
     $Set.linset_listize(!onboard)
   )
   val _ = list_foreach_cloref(passengers, lam (p) =<cloref1>
-    if get_floor(p) = floor then {
+    if get_destination(p) = floor then {
       val (pf | onboard) = global_get(onboard_lock)
       //Remove from elevator
       val _ = $Set.linset_remove<passenger>(!onboard, p, cmp_p)
