@@ -102,6 +102,9 @@ end
 
 (* ****** ****** *)
 
+#define nil list_nil
+#define :: list_cons
+
 implement board(floor, direction) = let
   val (pf | waiting) = global_get(waiting_lock)
   val opt = $Map.linmap_search_opt(!waiting, floor, cmp)
@@ -113,29 +116,40 @@ in
     | ~Some_vt (ref) => let
       val (minus, setpf | p) = ref
       val entering = list_of_list_vt(
-        $Set.linset_listize_free<passenger>(!p)
+        $Set.linset_listize<passenger>(!p)
       )
-      val () = !p := $Set.linset_make_nil{passenger}()
-      fun enter_elevator(p: passenger):<cloref1> Option(request) = let
+      //Go through and remove from waiting where applicable
+      fun remove_leaving{l:addr} (pf: !set(passenger) @ l 
+        | lst: List(passenger), p:ptr l
+      ):<cloref1> void = 
+        case+ lst of
+          | nil () => ()
+          | x :: xs => 
+            if get_direction(x) =  direction then let 
+              val _ = $Set.linset_remove(!p, x, cmp_p)
+            in remove_leaving(pf | xs, p) end
+      val _ = remove_leaving(setpf | entering, p)
+      //This is redundant, I'll refactor it when I have a chance.
+      fun enter_elevator (p: passenger):<cloref1> Option(request) = let
         val usersdir = get_direction(p)
       in
         if usersdir = direction then let
-       val (boardpf | onboard) = global_get(onboard_lock)
-       val _ = $Set.linset_insert(!onboard, p, cmp_p)
-       prval () = global_return(onboard_lock, boardpf)
-       val nxt = get_destination(p)
-       val id = get_id(p)
-      in Some(GoToFloor(id, nxt)) end
+           val (boardpf | onboard) = global_get(onboard_lock)
+           val _ = $Set.linset_insert(!onboard, p, cmp_p)
+           prval () = global_return(onboard_lock, boardpf)
+           val nxt = get_destination(p)
+           val id = get_id(p)
+         in Some(GoToFloor(id, nxt)) end
       else
         None()
       end
-      prval () = minus_addback(minus, setpf | !waiting)
       
-      val opt_requests = list_of_list_vt(
+      val opt_requests = list_of_list_vt (
         list_map_cloref(entering,
           enter_elevator
         )
       )
+      prval () = minus_addback(minus, setpf | !waiting)
       fun collect (
         res: List_vt(request), r: Option(request)
       ): List_vt(request) =

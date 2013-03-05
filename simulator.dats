@@ -52,8 +52,10 @@ implement publish_event(tag, id, flr, direction) = {
       | "move" =>   
         object_set(obj, "from", encode(flr))
       | _ =>> ()
-  val () = object_set(obj, "id", encode(id))
-  val () = object_set(obj, "flr", encode(flr))
+  val () = if id >= 0 then
+    object_set(obj, "id", encode(id))
+  val () = if flr >= 0 then
+    object_set(obj, "flr", encode(flr))
   val () = object_set(obj, "time", encode(!time))
   //
   prval () = global_return(time_lock, pf)
@@ -136,7 +138,18 @@ in
         )
       in
         case+ sorted_schedule of
-          | nil () => ()
+          | nil () => let
+            //Print the remaining schedule, if any
+            fun print_schedule (lst: List(request)): void =
+              case+ lst of  
+                | nil () => ()
+                | x :: xs => let
+                  val () = 
+                    case+ x of 
+                      | NeedElevator(flr, direction) => println! flr
+                      | GoToFloor(id, flr) => println! flr
+                in print_schedule(xs) end
+           in print_schedule(get_schedule(controller)) end
           | x :: xs => let
             val () =
               if x.0 > time() then
@@ -180,10 +193,13 @@ in
                           val _ = prerrln! "You cannot open the door while moving."
                         }
                         |  _ =>> let
-                          val () = publish_event("open", ~1, ~1, Some(state_direction(controller)))
+                          val () =
+                            publish_event("open", ~1, ~1, Some(state_direction(controller)))
                           val () = leave(elevator_floor)
                           val boarding = board(elevator_floor, state_direction(controller))
-                          fun timestamp(schedule: List(request),  i: int, res: List(time_event)): List(time_event) =
+                          fun timestamp(
+                            schedule: List(request),  i: int, res: List(time_event)
+                          ): List(time_event) =
                             case+ schedule of
                               | list_nil() => let
                                  val closed = list_cons(@(time()+i*1000, DoorsClosed()), res)
