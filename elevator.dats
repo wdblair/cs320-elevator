@@ -1,5 +1,10 @@
 staload "elevator.sats"
 
+assume nothing = '{
+  control= none,
+  schedule= indeterminate,
+  floor= suspicious
+}
 
 assume state = '{
   control= control_state,
